@@ -46,9 +46,10 @@ cfg_if::cfg_if! {
     } else if #[cfg(all(target_vendor = "fortanix", target_env = "sgx"))] {
         mod sgx;
         pub use self::sgx::*;
+    } else if #[cfg(target_os = "freertos")] {
+        mod freertos;
+        pub use self::freertos::*;
     } else {
-        //mod unix;
-        //pub use self::unix::*;
         //mod unsupported;
         //pub use self::unsupported::*;
         compile_error!("You shouldn't be here");

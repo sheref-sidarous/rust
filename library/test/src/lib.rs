@@ -21,6 +21,7 @@
 #![feature(process_exitcode_internals)]
 #![feature(panic_can_unwind)]
 #![feature(test)]
+#![feature(restricted_std)]
 
 // Public reexports
 pub use self::bench::{black_box, Bencher};
