@@ -1,0 +1,6 @@
+# Includes one of the default files in src/bootstrap/defaults
+profile = "compiler"
+changelog-seen = 2
+
+[target.thumbv7m-freertos-eabi]
+cc = "arm-none-eabi-gcc"

@@ -1182,6 +1182,7 @@ supported_targets! {
 
     ("thumbv6m-none-eabi", thumbv6m_none_eabi),
     ("thumbv7m-none-eabi", thumbv7m_none_eabi),
+    ("thumbv7m-freertos-eabi", thumbv7m_freertos_eabi),
     ("thumbv7em-none-eabi", thumbv7em_none_eabi),
     ("thumbv7em-none-eabihf", thumbv7em_none_eabihf),
     ("thumbv8m.base-none-eabi", thumbv8m_base_none_eabi),
