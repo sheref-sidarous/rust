@@ -30,6 +30,7 @@
 
 #![stable(feature = "rust1", since = "1.0.0")]
 #![doc(cfg(unix))]
+#![allow(unexpected_cfgs)]
 
 // Use linux as the default platform when documenting on other platforms like Windows
 #[cfg(doc)]
@@ -77,6 +78,8 @@ mod platform {
     pub use crate::os::vxworks::*;
     #[cfg(target_os = "watchos")]
     pub use crate::os::watchos::*;
+    #[cfg(target_os = "freertos")]
+    pub use crate::os::freertos::*;
 }
 
 pub mod ffi;

@@ -47,8 +47,11 @@ cfg_if::cfg_if! {
         mod sgx;
         pub use self::sgx::*;
     } else {
-        mod unsupported;
-        pub use self::unsupported::*;
+        //mod unix;
+        //pub use self::unix::*;
+        //mod unsupported;
+        //pub use self::unsupported::*;
+        compile_error!("You shouldn't be here");
     }
 }
 
