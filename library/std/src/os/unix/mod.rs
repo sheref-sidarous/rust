@@ -78,8 +78,6 @@ mod platform {
     pub use crate::os::vxworks::*;
     #[cfg(target_os = "watchos")]
     pub use crate::os::watchos::*;
-    #[cfg(target_os = "freertos")]
-    pub use crate::os::freertos::*;
 }
 
 pub mod ffi;

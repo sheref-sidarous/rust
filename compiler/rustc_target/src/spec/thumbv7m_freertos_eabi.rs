@@ -1,6 +1,6 @@
 // Targets the Cortex-M3 processor (ARMv7-M)
 
-use crate::spec::{cvs, Target, TargetOptions};
+use crate::spec::{Target, TargetOptions};
 
 pub fn target() -> Target {
     Target {
@@ -10,10 +10,7 @@ pub fn target() -> Target {
         arch: "arm".into(),
 
         options: TargetOptions {
-            families: cvs!["unix"],
             os: "freertos".into(),
-            env: "newlib".into(),
-
             abi: "eabi".into(),
             max_atomic_width: Some(32),
             ..super::thumb_base::opts()
