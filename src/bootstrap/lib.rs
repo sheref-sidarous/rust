@@ -153,6 +153,7 @@ const EXTRA_CHECK_CFGS: &[(Option<Mode>, &'static str, Option<&[&'static str]>)]
     (Some(Mode::ToolRustc), "windows_raw_dylib", None),
     // #[cfg(bootstrap)] ohos
     (Some(Mode::Std), "target_env", Some(&["ohos"])),
+    (Some(Mode::Std), "target_os", Some(&["freertos"])),
 ];
 
 /// A structure representing a Rust compiler.
