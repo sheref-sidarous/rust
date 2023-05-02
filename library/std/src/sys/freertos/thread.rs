@@ -1,3 +1,5 @@
+#![allow(non_upper_case_globals)]
+
 use super::unsupported;
 use crate::ffi::CStr;
 use crate::io;
@@ -7,6 +9,19 @@ use crate::time::Duration;
 pub struct Thread(!);
 
 pub const DEFAULT_MIN_STACK_SIZE: usize = 4096;
+
+#[allow(non_camel_case_types)]
+type TickType_t = u32;
+
+extern "C" {
+    pub fn vTaskDelay(xTicksToDelay : TickType_t);
+}
+
+// from FreeRTOS/FreeRTOS/Demo/CORTEX_MPS2_QEMU_IAR_GCC/FreeRTOSConfig.h
+const configTICK_RATE_HZ : TickType_t = 1000;
+
+// from FreeRTOS/FreeRTOS/Source/portable/GCC/ARM_CM3/portmacro.h
+const portTICK_PERIOD_MS : TickType_t = 1000 / configTICK_RATE_HZ;
 
 impl Thread {
     // unsafe: see thread::Builder::spawn_unchecked for safety requirements
@@ -22,8 +37,10 @@ impl Thread {
         // nope
     }
 
-    pub fn sleep(_dur: Duration) {
-        panic!("can't sleep");
+    pub fn sleep(dur: Duration) {
+        unsafe { 
+            vTaskDelay(dur.as_millis() as u32 * portTICK_PERIOD_MS)
+        }
     }
 
     pub fn join(self) {
