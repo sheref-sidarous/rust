@@ -1,3 +1,5 @@
+#![allow(unused_imports)]
+
 //! # The Rust Standard Library
 //!
 //! The Rust Standard Library is the foundation of portable Rust software, a

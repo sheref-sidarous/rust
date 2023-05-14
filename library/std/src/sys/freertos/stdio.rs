@@ -4,6 +4,10 @@ pub struct Stdin;
 pub struct Stdout;
 pub struct Stderr;
 
+extern "C" {
+    fn uart_write ( buff : *const u8, buff_len : usize);
+}
+
 impl Stdin {
     pub const fn new() -> Stdin {
         Stdin
@@ -24,6 +28,9 @@ impl Stdout {
 
 impl io::Write for Stdout {
     fn write(&mut self, buf: &[u8]) -> io::Result<usize> {
+        unsafe {
+            uart_write(buf.as_ptr(), buf.len());
+        }
         Ok(buf.len())
     }
 

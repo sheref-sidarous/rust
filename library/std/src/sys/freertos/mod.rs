@@ -1,4 +1,5 @@
-#![deny(unsafe_op_in_unsafe_fn)]
+#![allow(unsafe_op_in_unsafe_fn)]
+#![allow(dead_code)]
 
 pub mod alloc;
 pub mod args;
@@ -26,3 +27,5 @@ pub mod time;
 
 mod common;
 pub use common::*;
+
+mod freertos_api;
