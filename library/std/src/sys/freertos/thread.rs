@@ -5,28 +5,58 @@ use crate::ffi::CStr;
 use crate::io;
 use crate::num::NonZeroUsize;
 use crate::time::Duration;
+use crate::sys::freertos::freertos_api;
+use crate::ffi::{c_void, c_char};
 
-pub struct Thread(!);
+pub struct Thread(freertos_api::TaskHandle_t);
+struct ThreadDescriptor {
+    entry : Box<dyn FnOnce()>,
+    is_running : bool,
+    // a join handle
+}
 
 pub const DEFAULT_MIN_STACK_SIZE: usize = 4096;
 
 #[allow(non_camel_case_types)]
 type TickType_t = u32;
 
-extern "C" {
-    pub fn vTaskDelay(xTicksToDelay : TickType_t);
+
+extern "C" fn thread_entry (arg : *mut c_void) {
+
+
+    let mut thread_descriptor = unsafe { Box::from_raw(arg as *mut ThreadDescriptor) };
+
+
+    thread_descriptor.is_running = true;
+    (thread_descriptor.entry)();
+    thread_descriptor.is_running = false;
 }
-
-// from FreeRTOS/FreeRTOS/Demo/CORTEX_MPS2_QEMU_IAR_GCC/FreeRTOSConfig.h
-const configTICK_RATE_HZ : TickType_t = 1000;
-
-// from FreeRTOS/FreeRTOS/Source/portable/GCC/ARM_CM3/portmacro.h
-const portTICK_PERIOD_MS : TickType_t = 1000 / configTICK_RATE_HZ;
 
 impl Thread {
     // unsafe: see thread::Builder::spawn_unchecked for safety requirements
-    pub unsafe fn new(_stack: usize, _p: Box<dyn FnOnce()>) -> io::Result<Thread> {
-        unsupported()
+    pub unsafe fn new(stack: usize, p: Box<dyn FnOnce()>) -> io::Result<Thread> {
+
+        let arg : *mut ThreadDescriptor= Box::into_raw(Box::new(ThreadDescriptor {
+            entry: p,
+            is_running : false,
+        }));
+
+        let mut thread_handle : freertos_api::TaskHandle_t = core::ptr::null_mut();
+
+        let r = freertos_api::xTaskCreate(
+            thread_entry,  /* entry point */
+            core::ptr::null(),  /* Task name */
+            stack as freertos_api::configSTACK_DEPTH_TYPE, /*  */
+            arg as *mut c_void, freertos_api::DefaultTaskPriority, /* */
+            &mut thread_handle as *mut freertos_api::TaskHandle_t); /* get the handle back here */
+
+        if r == 0 {
+            // Success !
+            io::Result::Ok(Thread (thread_handle))
+        } else {
+            io::Result::Err(io::Error::from_raw_os_error(r))
+        }
+        
     }
 
     pub fn yield_now() {
@@ -34,17 +64,17 @@ impl Thread {
     }
 
     pub fn set_name(_name: &CStr) {
-        // nope
+        panic!("implement me!");
     }
 
     pub fn sleep(dur: Duration) {
         unsafe { 
-            vTaskDelay(dur.as_millis() as u32 * portTICK_PERIOD_MS)
+            freertos_api::vTaskDelay(dur.as_millis() as u32 * freertos_api::portTICK_PERIOD_MS)
         }
     }
 
     pub fn join(self) {
-        self.0
+        panic!("implement me!");
     }
 }
 
