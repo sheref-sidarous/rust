@@ -50,7 +50,7 @@ impl Thread {
             arg as *mut c_void, freertos_api::DefaultTaskPriority, /* */
             &mut thread_handle as *mut freertos_api::TaskHandle_t); /* get the handle back here */
 
-        if r == 0 {
+        if r == freertos_api::pdPASS {
             // Success !
             io::Result::Ok(Thread (thread_handle))
         } else {

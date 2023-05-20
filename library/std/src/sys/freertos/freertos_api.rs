@@ -19,6 +19,21 @@ pub const queueQUEUE_TYPE_MUTEX : u8 = 1;
 pub const semGIVE_BLOCK_TIME : TickType_t = 0;
 pub const queueSEND_TO_BACK : BaseType_t = 0;
 
+
+pub const pdFALSE            : BaseType_t = 0;
+pub const pdTRUE             : BaseType_t = 1;
+pub const pdFALSE_SIGNED     : BaseType_t = 0;
+pub const pdTRUE_SIGNED      : BaseType_t = 1;
+pub const pdFALSE_UNSIGNED   : UBaseType_t = 0;
+pub const pdTRUE_UNSIGNED    : UBaseType_t = 1;
+
+pub const errQUEUE_EMPTY     : BaseType_t = 0;
+pub const errQUEUE_FULL      : BaseType_t = 0;
+
+
+pub const pdPASS : BaseType_t = pdTRUE;
+pub const pdFAIL : BaseType_t = pdFALSE;
+
 // TODO: better Freertos task priority handling
 pub const DefaultTaskPriority : UBaseType_t = 5u32;
 
