@@ -60,7 +60,7 @@ impl Thread {
     }
 
     pub fn yield_now() {
-        // do nothing
+        unsafe { freertos_api::rust_std_taskYIELD(); }
     }
 
     pub fn set_name(_name: &CStr) {

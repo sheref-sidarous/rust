@@ -69,6 +69,8 @@ extern "C" {
         uxPriority : UBaseType_t,
         pxCreatedTask : *mut TaskHandle_t ) -> BaseType_t;
 
+    pub fn rust_std_taskYIELD();
+
 }
 
 pub unsafe fn xSemaphoreCreateMutex() -> SemaphoreHandle_t {
