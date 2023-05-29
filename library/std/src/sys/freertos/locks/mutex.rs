@@ -31,7 +31,7 @@ impl Mutex {
     #[inline]
     pub fn lock(&self) {
         unsafe {
-            let r = freertos_api::xSemaphoreTake(self.get_ptr(), freertos_api::portMAX_DELAY);
+            let r = freertos_api::rust_std_xSemaphoreTake(self.get_ptr(), freertos_api::portMAX_DELAY);
             assert_eq!(r, true, "Timed out waiting for Semaphore");
         }
     }
@@ -39,14 +39,14 @@ impl Mutex {
     #[inline]
     pub unsafe fn unlock(&self) {
         unsafe {
-            freertos_api::xSemaphoreGive(self.get_ptr());
+            freertos_api::rust_std_xSemaphoreGive(self.get_ptr());
         }
     }
 
     #[inline]
     pub fn try_lock(&self) -> bool {
         unsafe {
-            freertos_api::xSemaphoreTake(self.get_ptr(), 0)
+            freertos_api::rust_std_xSemaphoreTake(self.get_ptr(), 0)
         }
     }
 
@@ -57,7 +57,7 @@ impl Mutex {
 
     fn initialize(&self) -> freertos_api::SemaphoreHandle_t {
         let new_ptr = unsafe {
-            freertos_api::xSemaphoreCreateMutex()
+            freertos_api::rust_std_xSemaphoreCreateMutex()
         };
         match self.ptr.compare_exchange(null_mut(), new_ptr, AcqRel, Acquire) {
             Ok(_) => new_ptr,
@@ -65,7 +65,7 @@ impl Mutex {
                 // Lost the race to another thread.
                 // we should delete the semaphore we've just created and use the one we got back from the compare_exchange
                 unsafe {
-                    freertos_api::vSemaphoreDelete(new_ptr);
+                    freertos_api::rust_std_vSemaphoreDelete(new_ptr);
                 };
                 ptr
             }

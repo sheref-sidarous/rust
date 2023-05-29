@@ -56,7 +56,7 @@ impl Thread {
         } else {
             io::Result::Err(io::Error::from_raw_os_error(r))
         }
-        
+
     }
 
     pub fn yield_now() {
@@ -64,12 +64,13 @@ impl Thread {
     }
 
     pub fn set_name(_name: &CStr) {
-        panic!("implement me!");
+        // ignore name setting
     }
 
     pub fn sleep(dur: Duration) {
-        unsafe { 
-            freertos_api::vTaskDelay(dur.as_millis() as u32 * freertos_api::portTICK_PERIOD_MS)
+        unsafe {
+            freertos_api::vTaskDelay(
+                freertos_api::rust_std_msec_to_ticks(dur.as_millis() as u32))
         }
     }
 
@@ -79,7 +80,7 @@ impl Thread {
 }
 
 pub fn available_parallelism() -> io::Result<NonZeroUsize> {
-    unsupported()
+    unsafe { io::Result::Ok(NonZeroUsize::new_unchecked(1)) }
 }
 
 pub mod guard {

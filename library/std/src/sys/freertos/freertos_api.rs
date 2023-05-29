@@ -37,27 +37,9 @@ pub const pdFAIL : BaseType_t = pdFALSE;
 // TODO: better Freertos task priority handling
 pub const DefaultTaskPriority : UBaseType_t = 5u32;
 
-// from FreeRTOS/FreeRTOS/Demo/CORTEX_MPS2_QEMU_IAR_GCC/FreeRTOSConfig.h
-pub const configTICK_RATE_HZ : TickType_t = 1000;
-
-// from FreeRTOS/FreeRTOS/Source/portable/GCC/ARM_CM3/portmacro.h
-pub const portTICK_PERIOD_MS : TickType_t = 1000 / configTICK_RATE_HZ;
+pub const UBaseType_max : UBaseType_t = u32::MAX;
 
 extern "C" {
-
-    //pub fn xSemaphoreCreateMutex() -> SemaphoreHandle_t;
-    pub fn xQueueCreateMutex( mx_type : u8 ) -> SemaphoreHandle_t;
-
-    //pub fn xSemaphoreTake(xSemaphore : SemaphoreHandle_t, xTicksToWait : TickType_t) -> bool;
-    pub fn xQueueSemaphoreTake(xSemaphore : SemaphoreHandle_t, xTicksToWait : TickType_t) -> bool;
-
-    //pub fn xSemaphoreGive(xSemaphore : SemaphoreHandle_t);
-    pub fn xQueueGenericSend(xSemaphore : SemaphoreHandle_t, pvItemToQueue : *const c_void ,
-        xTicksToWait : TickType_t,
-        xCopyPosition : BaseType_t);
-
-    //pub fn vSemaphoreDelete(xSemaphore : SemaphoreHandle_t);
-    pub fn vQueueDelete(xSemaphore : SemaphoreHandle_t);
 
     pub fn vTaskDelay(xTicksToDelay : TickType_t);
     pub fn uart_write ( buff : *const u8, buff_len : usize);
@@ -69,23 +51,24 @@ extern "C" {
         uxPriority : UBaseType_t,
         pxCreatedTask : *mut TaskHandle_t ) -> BaseType_t;
 
+
+    // semaphore API
+    pub fn rust_std_xSemaphoreCreateMutex() -> SemaphoreHandle_t;
+
+    pub fn rust_std_xSemaphoreCreateCounting(
+        uxMaxCount : UBaseType_t,
+        uxInitialCount : UBaseType_t) -> SemaphoreHandle_t;
+
+    pub fn rust_std_xSemaphoreTake(xSemaphore : SemaphoreHandle_t, xTicksToWait : TickType_t) -> bool;
+
+    pub fn rust_std_xSemaphoreGive(xSemaphore : SemaphoreHandle_t);
+
+    pub fn rust_std_vSemaphoreDelete(xSemaphore : SemaphoreHandle_t);
+
+
+    // task related API
     pub fn rust_std_taskYIELD();
 
-}
-
-pub unsafe fn xSemaphoreCreateMutex() -> SemaphoreHandle_t {
-    xQueueCreateMutex( queueQUEUE_TYPE_MUTEX )
-}
-
-pub unsafe fn xSemaphoreTake(xSemaphore : SemaphoreHandle_t, xTicksToWait : TickType_t) -> bool {
-    xQueueSemaphoreTake(xSemaphore, xTicksToWait)
-}
-
-pub unsafe fn xSemaphoreGive(xSemaphore : SemaphoreHandle_t) {
-    xQueueGenericSend( xSemaphore, ptr::null(), semGIVE_BLOCK_TIME, queueSEND_TO_BACK )
-}
-
-pub unsafe fn vSemaphoreDelete(xSemaphore : SemaphoreHandle_t) {
-    vQueueDelete(xSemaphore)
+    pub fn rust_std_msec_to_ticks(millis : u32) -> TickType_t;
 
 }
