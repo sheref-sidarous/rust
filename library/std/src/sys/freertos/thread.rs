@@ -8,11 +8,14 @@ use crate::time::Duration;
 use crate::sys::freertos::freertos_api;
 use crate::ffi::{c_void, c_char};
 
-pub struct Thread(freertos_api::TaskHandle_t);
+pub struct Thread {
+    handle : freertos_api::TaskHandle_t,
+    join_semaphore : freertos_api::SemaphoreHandle_t,
+}
 struct ThreadDescriptor {
     entry : Box<dyn FnOnce()>,
     is_running : bool,
-    // a join handle
+    join_semaphore : freertos_api::SemaphoreHandle_t,
 }
 
 pub const DEFAULT_MIN_STACK_SIZE: usize = 4096;
@@ -30,15 +33,22 @@ extern "C" fn thread_entry (arg : *mut c_void) {
     thread_descriptor.is_running = true;
     (thread_descriptor.entry)();
     thread_descriptor.is_running = false;
+
+    unsafe {
+        freertos_api::rust_std_xSemaphoreGive(thread_descriptor.join_semaphore);
+    }
 }
 
 impl Thread {
     // unsafe: see thread::Builder::spawn_unchecked for safety requirements
     pub unsafe fn new(stack: usize, p: Box<dyn FnOnce()>) -> io::Result<Thread> {
 
+        let join_semaphore = freertos_api::rust_std_xSemaphoreCreateMutex();
+
         let arg : *mut ThreadDescriptor= Box::into_raw(Box::new(ThreadDescriptor {
             entry: p,
             is_running : false,
+            join_semaphore : join_semaphore.clone(),
         }));
 
         let mut thread_handle : freertos_api::TaskHandle_t = core::ptr::null_mut();
@@ -52,7 +62,10 @@ impl Thread {
 
         if r == freertos_api::pdPASS {
             // Success !
-            io::Result::Ok(Thread (thread_handle))
+            io::Result::Ok(Thread {
+                handle : thread_handle,
+                join_semaphore : join_semaphore,
+            })
         } else {
             io::Result::Err(io::Error::from_raw_os_error(r))
         }
@@ -75,7 +88,9 @@ impl Thread {
     }
 
     pub fn join(self) {
-        panic!("implement me!");
+        unsafe {
+            freertos_api::rust_std_xSemaphoreTake(self.join_semaphore, freertos_api::portMAX_DELAY);
+        }
     }
 }
 
