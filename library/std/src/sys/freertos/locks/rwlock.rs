@@ -1,65 +1,86 @@
-use crate::cell::Cell;
+use crate::sync::{Mutex, Condvar};
 
+struct RwCounters {
+    readers : usize,
+    writers : usize
+}
 pub struct RwLock {
-    // This platform has no threads, so we can use a Cell here.
-    mode: Cell<isize>,
+    counters: Mutex<RwCounters>,
+    waiting : Condvar
 }
 
 unsafe impl Send for RwLock {}
-unsafe impl Sync for RwLock {} // no threads on this platform
+unsafe impl Sync for RwLock {}
 
 impl RwLock {
     #[inline]
     #[rustc_const_stable(feature = "const_locks", since = "1.63.0")]
     pub const fn new() -> RwLock {
-        RwLock { mode: Cell::new(0) }
-    }
-
-    #[inline]
-    pub fn read(&self) {
-        let m = self.mode.get();
-        if m >= 0 {
-            self.mode.set(m + 1);
-        } else {
-            rtabort!("rwlock locked for writing");
+        RwLock {
+            counters : Mutex::new(RwCounters { readers :0, writers :0}),
+            waiting : Condvar::new(),
         }
     }
 
     #[inline]
+    pub fn read(&self) {
+        let mut counters = self.counters.lock().unwrap();
+        while counters.writers > 0 {
+            // there is a pending writer
+            counters = self.waiting.wait(counters).unwrap();
+        }
+        counters.readers += 1;
+        return;
+    }
+
+    #[inline]
     pub fn try_read(&self) -> bool {
-        let m = self.mode.get();
-        if m >= 0 {
-            self.mode.set(m + 1);
-            true
+        let mut counters = self.counters.lock().unwrap();
+        if counters.writers > 0 {
+            // there is a pending writer
+            return false;
         } else {
-            false
+            counters.readers += 1;
+            return true;
         }
     }
 
     #[inline]
     pub fn write(&self) {
-        if self.mode.replace(-1) != 0 {
-            rtabort!("rwlock locked for reading")
+        let mut counters = self.counters.lock().unwrap();
+        while counters.writers > 0 && counters.readers > 0{
+            // there is a pending writer or reader
+            counters = self.waiting.wait(counters).unwrap();
         }
+        counters.writers += 1;
+        return;
     }
 
     #[inline]
     pub fn try_write(&self) -> bool {
-        if self.mode.get() == 0 {
-            self.mode.set(-1);
-            true
+        let mut counters = self.counters.lock().unwrap();
+        if counters.writers > 0 && counters.readers > 0{
+            // there is a pending writer or reader
+            return false;
         } else {
-            false
+            counters.writers += 1;
+            return true;
         }
     }
 
     #[inline]
     pub unsafe fn read_unlock(&self) {
-        self.mode.set(self.mode.get() - 1);
+        let mut counters = self.counters.lock().unwrap();
+        //assert_gte!(counters.readers, 1);
+        counters.readers -= 1;
+        self.waiting.notify_all();
     }
 
     #[inline]
     pub unsafe fn write_unlock(&self) {
-        assert_eq!(self.mode.replace(0), -1);
+        let mut counters = self.counters.lock().unwrap();
+        //assert_gte!(counters.writers, 1);
+        counters.writers -= 1;
+        self.waiting.notify_all();
     }
 }
