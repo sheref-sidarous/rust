@@ -65,9 +65,9 @@ impl Condvar {
     }
 
     fn increment_waiting_threads(&self) {
-        let new_count = self.waiting_thread_cnt.fetch_add(1, SeqCst);
+        let old_count = self.waiting_thread_cnt.fetch_add(1, SeqCst);
         // guard against an overflow
-        assert_ne!(new_count, 0);
+        assert_ne!(old_count, usize::MAX);
     }
 
     fn decrement_waiting_threads(&self) -> bool {

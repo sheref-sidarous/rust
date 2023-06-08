@@ -18,6 +18,7 @@ Why this file is needed ?
 #include "task.h"
 #include "timers.h"
 #include "queue.h"
+#include "semphr.h"
 
 void rust_std_taskYIELD(void)
 {
