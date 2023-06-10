@@ -83,4 +83,8 @@ extern "C" {
 
     pub fn rust_std_vTaskDelete( xTask : TaskHandle_t );
 
+    pub fn rust_std_xTaskGetTickCount( ) -> TickType_t;
+
+    pub fn rust_std_ticks_to_msec (ticks : TickType_t) -> u32;
+
 }
