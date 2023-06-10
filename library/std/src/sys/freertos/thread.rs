@@ -65,9 +65,9 @@ impl Thread {
         if r == freertos_api::pdPASS {
 
             // create the Hashmap for TLS
-            let map : Box<HashMap<usize, *mut u8>> = Box::new(HashMap::new());
+            let list : Box<Vec<*mut u8>> = Box::new(Vec::new());
             freertos_api::rust_std_vTaskSetThreadLocalStoragePointer(
-                thread_handle, 0, Box::into_raw(map) as *mut c_void);
+                thread_handle, 0, Box::into_raw(list) as *mut c_void);
             // Success !
             io::Result::Ok(Thread {
                 handle : thread_handle,
