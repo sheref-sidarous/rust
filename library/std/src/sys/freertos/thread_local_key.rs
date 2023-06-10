@@ -1,84 +1,67 @@
 use crate::cell::RefCell;
 use crate::ptr::null_mut;
 use crate::sync::Mutex;
+use crate::vec::Vec;
+use crate::collections::HashMap;
+use crate::sys::freertos::freertos_api;
 
 pub type Key = usize;
 
-// Let's assume that FreeRTOS is all one thread for now, so this API becomes a simple storage
 
-#[derive(Copy, Clone)]
-struct Entry {
-    value : *mut u8,
-    dtor : Option<unsafe extern "C" fn(*mut u8)>,
-}
-
-unsafe impl Send for Entry {}
-
-struct Table<const N : usize> {
-    entries : [Entry; N],
-    size : usize,
-}
-
-impl<const N : usize> Table<N> {
-
-    const fn new() -> Self {
-        Table {
-            entries: [Entry {value : null_mut(), dtor: None}; N],
-            size : 0,
-        }
-    }
-    
-    fn create(&mut self, dtor: Option<unsafe extern "C" fn(*mut u8)>) -> Key {
-        if self.size < N {
-            self.entries[self.size].dtor = dtor;
-            let new_key = self.size;
-            self.size += 1;
-            new_key
-        } else {
-            panic!("Thread local storage exhausted");
-        }
-    }
-    
-    fn set(&mut self, key: Key, value: *mut u8) {
-        if key < self.size {
-            self.entries[key].value = value;
-        } else {
-            panic!("Invalid key");
-        }
-    }    
-    
-    fn get(&self, key: Key) -> *mut u8 {
-        if key < self.size {
-            self.entries[key].value
-        } else {
-            panic!("Invalid key");
-        }
-    }
-    
-    pub unsafe fn destroy(&mut self, _key: Key) {
-        // not implemented        
-    }
-
-}
-
-static THREAD_LOCAL_STORAGE : Mutex<RefCell<Table<10>>> = Mutex::new(RefCell::new(Table::new()));
+static DESTRUCTORS : Mutex<RefCell<
+                        Vec<
+                            Option<unsafe extern "C" fn(*mut u8)>
+                        >
+                      >>  = Mutex::new(RefCell::new(Vec::new()));
 
 #[inline]
 pub unsafe fn create(dtor: Option<unsafe extern "C" fn(*mut u8)>) -> Key {
-    THREAD_LOCAL_STORAGE.lock().expect("err").borrow_mut().create(dtor)
+    let binding = DESTRUCTORS.lock().expect("err");
+    let mut destructors = binding.borrow_mut();
+    destructors.push(dtor);
+
+    // returning an index woulve'benn simpler, but 0 has a special meaning as posix's KEY_SENTVAL
+    // destructors.len() -1
+
+    destructors.len()
 }
 
 #[inline]
 pub unsafe fn set(key: Key, value: *mut u8) {
-    THREAD_LOCAL_STORAGE.lock().expect("err").borrow_mut().set(key, value)
+    // get the thread-specific map
+    let map : &mut HashMap<Key, *mut u8> = unsafe {
+        let map_raw_ptr = freertos_api::rust_std_pvTaskGetThreadLocalStoragePointer (
+            null_mut(),
+            0) as *mut HashMap<Key, *mut u8>;
+
+        &mut *map_raw_ptr
+    };
+    map.insert(key, value);
 }
 
 #[inline]
 pub unsafe fn get(key: Key) -> *mut u8 {
-    THREAD_LOCAL_STORAGE.lock().expect("err").borrow().get(key)
+    let map = unsafe {
+        let map_raw_ptr = freertos_api::rust_std_pvTaskGetThreadLocalStoragePointer (
+            null_mut(),
+            0) as *mut HashMap<Key, *mut u8>;
+
+        &*map_raw_ptr
+    };
+    match map.get(&key) {
+        Some(value) => value.clone(),
+        None => null_mut(),
+    }
 }
 
 #[inline]
 pub unsafe fn destroy(key: Key) {
-    THREAD_LOCAL_STORAGE.lock().expect("err").borrow_mut().destroy(key)
+
+    let binding = DESTRUCTORS.lock().expect("err");
+    let destructors = binding.borrow();
+    let dtor = destructors.get(key).unwrap();
+    if let Some(_function) = dtor {
+        // TODO: this should actually loop on all local threads and call function for any non-null key value.
+        //function(null_mut());
+    }
 }

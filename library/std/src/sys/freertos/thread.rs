@@ -7,6 +7,8 @@ use crate::num::NonZeroUsize;
 use crate::time::Duration;
 use crate::sys::freertos::freertos_api;
 use crate::ffi::{c_void, c_char};
+use crate::collections::HashMap;
+use crate::boxed::Box;
 
 pub struct Thread {
     handle : freertos_api::TaskHandle_t,
@@ -61,6 +63,11 @@ impl Thread {
             &mut thread_handle as *mut freertos_api::TaskHandle_t); /* get the handle back here */
 
         if r == freertos_api::pdPASS {
+
+            // create the Hashmap for TLS
+            let map : Box<HashMap<usize, *mut u8>> = Box::new(HashMap::new());
+            freertos_api::rust_std_vTaskSetThreadLocalStoragePointer(
+                thread_handle, 0, Box::into_raw(map) as *mut c_void);
             // Success !
             io::Result::Ok(Thread {
                 handle : thread_handle,

@@ -20,6 +20,12 @@ Why this file is needed ?
 #include "queue.h"
 #include "semphr.h"
 
+#if configNUM_THREAD_LOCAL_STORAGE_POINTERS < 1
+#error "std Rust needs at least pne thread local storage slot"
+#endif
+
+
+
 void rust_std_taskYIELD(void)
 {
   taskYIELD();
@@ -54,4 +60,21 @@ void rust_std_vSemaphoreDelete(SemaphoreHandle_t xSemaphore)
 
 TickType_t rust_std_msec_to_ticks (uint32_t millis) {
   return millis * portTICK_PERIOD_MS;
+}
+
+uint32_t rust_std_get_configNUM_THREAD_LOCAL_STORAGE_POINTERS () {
+  return configNUM_THREAD_LOCAL_STORAGE_POINTERS;
+}
+
+
+void rust_std_vTaskSetThreadLocalStoragePointer( TaskHandle_t xTaskToSet,
+                                        BaseType_t xIndex,
+                                        void * pvValue ) {
+    vTaskSetThreadLocalStoragePointer(xTaskToSet, xIndex, pvValue);
+}
+
+
+void * rust_std_pvTaskGetThreadLocalStoragePointer( TaskHandle_t xTaskToQuery,
+                                            BaseType_t xIndex ) {
+    return pvTaskGetThreadLocalStoragePointer( xTaskToQuery, xIndex );
 }

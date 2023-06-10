@@ -71,4 +71,15 @@ extern "C" {
 
     pub fn rust_std_msec_to_ticks(millis : u32) -> TickType_t;
 
+    pub fn rust_std_get_configNUM_THREAD_LOCAL_STORAGE_POINTERS () -> u32;
+
+    pub fn rust_std_vTaskSetThreadLocalStoragePointer(
+        xTaskToSet : TaskHandle_t,
+        xIndex : BaseType_t, pvValue : *mut c_void );
+
+    pub fn rust_std_pvTaskGetThreadLocalStoragePointer(
+        xTaskToQuery : TaskHandle_t,
+        xIndex : BaseType_t ) -> *mut c_void;
+
+
 }
