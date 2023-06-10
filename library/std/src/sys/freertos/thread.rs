@@ -38,6 +38,7 @@ extern "C" fn thread_entry (arg : *mut c_void) {
 
     unsafe {
         freertos_api::rust_std_xSemaphoreGive(thread_descriptor.join_semaphore);
+        freertos_api::rust_std_vTaskDelete( core::ptr::null_mut() );
     }
 }
 

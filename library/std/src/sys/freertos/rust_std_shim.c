@@ -31,6 +31,10 @@ void rust_std_taskYIELD(void)
   taskYIELD();
 }
 
+void rust_std_vTaskDelete( TaskHandle_t xTask ) {
+  vTaskDelete(xTask);
+}
+
 SemaphoreHandle_t rust_std_xSemaphoreCreateCounting(UBaseType_t uxMaxCount,
                                                     UBaseType_t uxInitialCount)
 {

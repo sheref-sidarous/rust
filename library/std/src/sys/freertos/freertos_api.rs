@@ -81,5 +81,6 @@ extern "C" {
         xTaskToQuery : TaskHandle_t,
         xIndex : BaseType_t ) -> *mut c_void;
 
+    pub fn rust_std_vTaskDelete( xTask : TaskHandle_t );
 
 }
